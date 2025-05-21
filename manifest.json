@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "WhatsBlitz",
+  "version": "1.0",
+  "description": "Send personalized WhatsApp messages by automation.",
+  "permissions": [
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://web.whatsapp.com/*"
+  ],
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["scripts/content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  }
+}
