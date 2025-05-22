@@ -24,8 +24,6 @@ chrome.runtime.onMessage.addListener(async (request) => {
 
 async function sendMessage(name, message) {
   try {
-    console.log("🔄 Resetting WhatsApp UI...");
-
     const focusBreaker = document.querySelector('header');
     if (focusBreaker) {
       focusBreaker.click();
@@ -33,7 +31,7 @@ async function sendMessage(name, message) {
     }
 
     const searchInput = document.querySelector('div[contenteditable="true"][data-tab]');
-    if (!searchInput) throw new Error("❌ Search box not found");
+    if (!searchInput) throw new Error("Search box not found");
 
     searchInput.focus();
     await wait(300);
@@ -47,18 +45,22 @@ async function sendMessage(name, message) {
       await wait(100);
     }
 
-    console.log(`🔍 Looking for contact "${name}"...`);
-    await wait(2000);
+    searchInput.focus();
+    await wait(400);
+    searchInput.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      keyCode: 13,
+      which: 13,
+      bubbles: true,
+      cancelable: true
+    }));
 
-    const contact = document.querySelector(`span[title="${name}"]`);
-    if (!contact) throw new Error(`❌ Contact not found: ${name}`);
-
-    contact.click(); 
-    console.log(`✅ Chat opened with: ${name}`);
-
+    console.log(`📨 Opening chat with: ${name}`);
     await wait(2000);
 
     const messageBox = await waitForChatBox();
+
     messageBox.focus();
     document.execCommand('selectAll', false, null);
     document.execCommand('delete', false, null);
@@ -92,12 +94,10 @@ async function sendMessage(name, message) {
 
     return true;
   } catch (err) {
-    console.error("⚠️ Error in sendMessage():", err);
+    console.error("⚠️ Error in sending message:", err);
     return false;
   }
 }
-
-
 
 async function waitForChatBox(timeout = 5000) {
   const pollInterval = 100;
