@@ -1,64 +1,125 @@
-console.log("WhatsBlitz content script loaded");
+console.warn("🟡 WhatsBlitz content script is running!");
 
-window.addEventListener("message", async (event) => {
-  if (event.source !== window || event.data.type !== "WHATSBLITZ_CONTACTS") return;
+chrome.runtime.onMessage.addListener(async (request) => {
+  if (request.type !== "WHATSBLITZ_CONTACTS") return;
 
-  const contacts = event.data.contacts;
+  const contacts = request.contacts;
   console.log("📨 Contacts received:", contacts);
 
-  for (let i = 0; i < contacts.length; i++) {
-    const { Phone, Name, Message } = contacts[i];
+  for (const { Name, Message } of contacts) {
+    const personalized = Message.replace(/\{\{name\}\}/gi, Name);
+    const success = await sendMessage(Name, personalized);
 
-    const personalizedMessage = Message.replace(/\{\{name\}\}/gi, Name);
-    const success = await sendMessageToNumber(Phone, personalizedMessage);
+    if (success) {
+      console.log(`✅ Sent to ${Name}`);
+    } else {
+      console.warn(`❌ Failed for ${Name}`);
+    }
 
-    if (success) console.log(`Sent to ${Name} (${Phone})`);
-    else console.warn(`Failed for ${Phone}`);
-
-    const delay = getRandomDelay(5000, 15000);
-    await wait(delay);
+    await wait(getRandomDelay(3000, 6000));
   }
 
   console.log("🎉 Messaging completed!");
 });
 
+async function sendMessage(name, message) {
+  try {
+    console.log("🔄 Resetting WhatsApp UI...");
+
+    const focusBreaker = document.querySelector('header');
+    if (focusBreaker) {
+      focusBreaker.click();
+      await wait(300);
+    }
+
+    const searchInput = document.querySelector('div[contenteditable="true"][data-tab]');
+    if (!searchInput) throw new Error("❌ Search box not found");
+
+    searchInput.focus();
+    await wait(300);
+    document.execCommand('selectAll', false, null);
+    document.execCommand('delete', false, null);
+    await wait(300);
+
+    for (let char of name) {
+      searchInput.focus();
+      document.execCommand('insertText', false, char);
+      await wait(100);
+    }
+
+    console.log(`🔍 Looking for contact "${name}"...`);
+    await wait(2000);
+
+    const contact = document.querySelector(`span[title="${name}"]`);
+    if (!contact) throw new Error(`❌ Contact not found: ${name}`);
+
+    contact.click(); 
+    console.log(`✅ Chat opened with: ${name}`);
+
+    await wait(2000);
+
+    const messageBox = await waitForChatBox();
+    messageBox.focus();
+    document.execCommand('selectAll', false, null);
+    document.execCommand('delete', false, null);
+    await wait(300);
+
+    for (let char of message) {
+      messageBox.focus();
+      document.execCommand('insertText', false, char);
+      await wait(50);
+    }
+
+    messageBox.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      keyCode: 13,
+      which: 13,
+      bubbles: true,
+      cancelable: true
+    }));
+
+    await wait(1500);
+
+    const searchAgain = document.querySelector('div[contenteditable="true"][data-tab]');
+    if (searchAgain) {
+      searchAgain.focus();
+      await wait(300);
+      document.execCommand('selectAll', false, null);
+      document.execCommand('delete', false, null);
+      console.log("🔍 Search bar cleared");
+    }
+
+    return true;
+  } catch (err) {
+    console.error("⚠️ Error in sendMessage():", err);
+    return false;
+  }
+}
+
+
+
+async function waitForChatBox(timeout = 5000) {
+  const pollInterval = 100;
+  let elapsed = 0;
+
+  while (elapsed < timeout) {
+    const boxes = [...document.querySelectorAll('div[contenteditable="true"][role="textbox"]')];
+    const chatBox = boxes.find(
+      el => el.innerText === '' || el.getAttribute('data-tab') === '10'
+    );
+    if (chatBox) return chatBox;
+    await wait(pollInterval);
+    elapsed += pollInterval;
+  }
+
+  throw new Error("❌ Message box not found after waiting.");
+}
+
 function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function getRandomDelay(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-async function sendMessageToNumber(phone, message) {
-  try {
-    const searchBox = document.querySelector('div[contenteditable="true"][data-tab="3"]');
-    if (!searchBox) throw new Error("Search box not found");
-    searchBox.focus();
-
-    document.execCommand("insertText", false, phone);
-    await wait(2000); 
-    const result = document.querySelector(`span[title="${phone}"]`);
-    if (!result) {
-      console.warn(`Phone number not found: ${phone}`);
-      return false;
-    }
-    result.click();
-    await wait(1500);
-    const messageBox = document.querySelector('div[contenteditable="true"][data-tab="10"]');
-    if (!messageBox) throw new Error("Message box not found");
-
-    messageBox.focus();
-    document.execCommand("insertText", false, message);
-    await wait(500);
-
-    const sendButton = document.querySelector('span[data-icon="send"]');
-    if (!sendButton) throw new Error("Send button not found");
-
-    sendButton.click();
-    return true;
-  } catch (error) {
-    console.error("⚠️ Error in sending message:", error);
-    return false;
-  }
 }

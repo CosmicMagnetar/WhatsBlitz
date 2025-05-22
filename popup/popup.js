@@ -1,6 +1,3 @@
-import * as XLSX from 'xlsx';
-import Papa from 'papaparse';
-
 let contacts = [];
 
 document.getElementById('fileInput').addEventListener('change', handleFileUpload);
@@ -11,7 +8,7 @@ function handleFileUpload(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  const ext = file.name.split('.').pop();
+  const ext = file.name.split('.').pop().toLowerCase();
 
   if (ext === 'csv') {
     reader.onload = (e) => parseCSV(e.target.result);
@@ -38,12 +35,13 @@ function parseCSV(data) {
       contacts = results.data;
       console.log('Parsed Contacts:', contacts);
       updateProgress(0);
-    },
+    }
   });
 }
 
 function updateProgress(percent) {
-  document.getElementById('progressBar').style.width = `${percent}%`;
+  const bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = `${percent}%`;
 }
 
 function startMessaging() {
@@ -53,16 +51,11 @@ function startMessaging() {
   }
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.scripting.executeScript({
-      target: { tabId: tabs[0].id },
-      func: sendContactsToContent,
-      args: [contacts],
+    chrome.tabs.sendMessage(tabs[0].id, {
+      type: "WHATSBLITZ_CONTACTS",
+      contacts
     });
   });
 
   updateProgress(100);
-}
-
-function sendContactsToContent(contacts) {
-  window.postMessage({ type: 'WHATSBLITZ_CONTACTS', contacts }, '*');
 }
