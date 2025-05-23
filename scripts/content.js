@@ -27,17 +27,41 @@ async function sendMessage(name, message) {
     const focusBreaker = document.querySelector('header');
     if (focusBreaker) {
       focusBreaker.click();
-      await wait(300);
+      await wait(200);
     }
 
     const searchInput = document.querySelector('div[contenteditable="true"][data-tab]');
     if (!searchInput) throw new Error("Search box not found");
 
     searchInput.focus();
-    await wait(300);
-    document.execCommand('selectAll', false, null);
-    document.execCommand('delete', false, null);
-    await wait(300);
+    for (let i = 0; i < 2; i++) {
+      searchInput.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true
+      }));
+      await wait(200);
+    }
+
+    for (let i = 0; i < 2; i++) {
+      searchInput.focus();
+      document.execCommand('selectAll', false, null);
+      document.execCommand('delete', false, null);
+      await wait(300);
+    }
+
+    const logo = document.querySelector('a[aria-label][href="/"]');
+    if (logo) {
+      logo.click();
+      await wait(500);
+    }
+    document.activeElement.blur();
+    await wait(500);
+    searchInput.focus();
+    await wait(500);
 
     for (let char of name) {
       searchInput.focus();
@@ -45,8 +69,8 @@ async function sendMessage(name, message) {
       await wait(100);
     }
 
-    searchInput.focus();
-    await wait(400);
+    await wait(500);
+
     searchInput.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'Enter',
       code: 'Enter',
@@ -60,7 +84,6 @@ async function sendMessage(name, message) {
     await wait(2000);
 
     const messageBox = await waitForChatBox();
-
     messageBox.focus();
     document.execCommand('selectAll', false, null);
     document.execCommand('delete', false, null);
@@ -83,18 +106,18 @@ async function sendMessage(name, message) {
 
     await wait(1500);
 
-    const searchAgain = document.querySelector('div[contenteditable="true"][data-tab]');
-    if (searchAgain) {
-      searchAgain.focus();
-      await wait(300);
+    for (let i = 0; i < 2; i++) {
+      searchInput.focus();
       document.execCommand('selectAll', false, null);
       document.execCommand('delete', false, null);
-      console.log("🔍 Search bar cleared");
+      await wait(300);
     }
 
+    console.log("🔍 Search bar cleared");
     return true;
+
   } catch (err) {
-    console.error("⚠️ Error in sending message:", err);
+    console.error("⚠️ Error in sending message:", err.message || err);
     return false;
   }
 }

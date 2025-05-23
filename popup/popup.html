@@ -1,32 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WhatsBlitz</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link href="popup.css" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsBlitz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-    <h1>WhatsBlitz</h1>
-    <br />
-    <label class="upload-section" for="fileInput">
-        📁 Click to Upload Excel File
-        <input type="file" id="fileInput" accept=".xlsx,.csv" />
+    <div class="logo">
+        <i class="fas fa-bolt"></i>
+        <h1>WhatsBlitz</h1>
+    </div>
+
+    <div class="desc">
+        Easily send personalized messages to all your contacts<br />
+        using WhatsApp Web — just upload your file and go!
+    </div>
+
+    <label class="upload-box" for="fileInput">
+        <i class="fas fa-upload"></i> Upload Excel or CSV File
+        <input type="file" id="fileInput" accept=".xlsx,.csv">
     </label>
-    <br />
-    <h2>Or</h2>
-    <br />
-    <button id="startBtn">🚀 Start Messaging</button>
+
+    <div class="desc">then</div>
+
+    <button id="startBtn"><i class="fas fa-paper-plane"></i> Start Messaging</button>
+
     <div class="progress-container">
         <div class="progress-bar" id="progressBar"></div>
     </div>
 
-    <div class="footer">Made for Alfaleus Internship</div>
+    <div class="footer">Made by Krishna</div>
 
     <script src="../libs/xlsx.full.min.js"></script>
     <script src="../libs/papaparse.min.js"></script>
     <script src="popup.js"></script>
-
 </body>
 </html>
